@@ -1,5 +1,6 @@
 package server;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -29,7 +30,9 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         System.out.println("连接信息：" + ctx.channel() +"   "+format);
         // 向客户端发送数据
         String message = "欢迎连接到服务器";
-        ctx.writeAndFlush(Unpooled.copiedBuffer(message, CharsetUtil.UTF_8));
+        ByteBuf responseBuf = ctx.alloc().buffer();
+        responseBuf.writeBytes(message.getBytes());
+        ctx.writeAndFlush(responseBuf);
     }
 
     @Override
