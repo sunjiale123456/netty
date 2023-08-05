@@ -11,6 +11,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
+import write.ClickHouseHandler;
 
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +40,9 @@ public class nettyServer{
 //                        ch.pipeline().addLast("decoder", new StandardJsonDecoder());
 //                        ch.pipeline().addLast("encoder", new StandardJsonEncoder());
                         // 将数据转为字符
-                        ch.pipeline().addLast(new StringDecoder());
-                        ch.pipeline().addLast(new ServerHandler());
+//                        ch.pipeline().addLast(new StringDecoder());
+//                        ch.pipeline().addLast(new ServerHandler());
+                        ch.pipeline().addLast(new ClickHouseHandler());
                     }
             });
 

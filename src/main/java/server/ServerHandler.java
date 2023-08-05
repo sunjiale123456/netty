@@ -37,7 +37,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object message) throws Exception {
-        System.out.println(ctx.channel().remoteAddress()+" 接收到的消息:{ "+message+" }  "+timeFormat.format(System.currentTimeMillis()));
+//        System.out.println(ctx.channel().remoteAddress()+" 接收到的消息:{ "+message+" }  "+timeFormat.format(System.currentTimeMillis()));
         if (message instanceof ProtoMsg) {
             ProtoMsg protoMsg = (ProtoMsg) message;
             short msgType = protoMsg.getMsgType();
@@ -66,6 +66,8 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
         super.channelInactive(ctx);
     }
+
+
 
     private void reconnect() {
 //        try {

@@ -1,6 +1,7 @@
 package send;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -14,6 +15,7 @@ public class NettyClientTest {
     private String host;
     private int port;
     int index = 0;
+    private static int MAX_RETRIES = 1000;
 
     public NettyClientTest(String host, int port) {
         this.host = host;
@@ -23,7 +25,6 @@ public class NettyClientTest {
     public void start() throws Exception {
         EventLoopGroup group = new NioEventLoopGroup();
 
-        try {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(group)
                     .channel(NioSocketChannel.class)
@@ -62,33 +63,47 @@ public class NettyClientTest {
             // 使用定时任务发送数据
             channel.eventLoop().scheduleAtFixedRate(() -> {
 //                String message = "$数据开始   - >   "+ (index++)+"$";
-                String message = "$ProtoMsg(msgType = 1, msgLength = 232, msg = {\n" +
-                        "   \"alarm\": 0,\n" +
-                        "   \"angle\": 163,\n" +
-                        "   \"bizType\": 0,\n" +
-                        "   \"gpsTime\": \"2020-12-18 11:52:29\",\n" +
-                        "   \"height\": 499,\n" +
-                        "   \"lat\": 30.397653,\n" +
-                        "   \"license\": \"粤B01465D\",\n" +
-                        "   \"lineCode\": 0,\n" +
-                        "   \"lineId\": 0,\n" +
-                        "   \"lng\": 104.071048,\n" +
-                        "   \"mile\": 0,\n" +
-                        "   \"speed\": 0,\n" +
-                        "   \"status\": 3,\n" +
-                        "   \"vehicleId\": 1204498656854080,\n" +
-                        "   \"crowding\": -1\n" +
-                        "})$";
-                channel.writeAndFlush(message);
-                if(index==100)index=0;
-            }, 0, 1, TimeUnit.SECONDS);
+                String message = "ProtoMsg(msgType = 2, msgLength = 411, msg = {\n" +
+                        "\t\"angle\": 220,\n" +
+                        "\t\"bizType\": 2,\n" +
+                        "\t\"doorCnt\": 1,\n" +
+                        "\t\"flag\": 4,\n" +
+                        "\t\"height\": 0,\n" +
+                        "\t\"ioStation\": 3,\n" +
+                        "\t\"ioTime\": \"2020-12-18 11:52:35\",\n" +
+                        "\t\"lat\": 113.918317,\n" +
+                        "\t\"leaveTime\": 0,\n" +
+                        "\t\"license\": \"川A12001\",\n" +
+                        "\t\"lineId\": 1204426124640320,\n" +
+                        "\t\"lineName\": \"120\",\n" +
+                        "\t\"lng\": 22.549599,\n" +
+                        "\t\"passengerCnt\": 14,\n" +
+                        "\t\"speed\": 0.0,\n" +
+                        "\t\"stationCode\": 1214,\n" +
+                        "\t\"stationId\": 1204426126639181,\n" +
+                        "\t\"stationName\": \"金马广场\",\n" +
+                        "\t\"stationNo\": 4,\n" +
+                        "\t\"vehicleId\": 1204428111396928\n" +
+                        "})";
+                // 准备要推送的字节数据
+                byte[] data = message.getBytes();
 
-            // 等待连接关闭
+                // 创建ByteBuf，并写入数据
+                ByteBuf buffer = Unpooled.buffer();
+                buffer.writeBytes(data);
+
+                // 推送字节数据
+                channel.writeAndFlush(buffer);
+
+//                ByteBuf buffer = Unpooled.copiedBuffer(message, CharsetUtil.UTF_8);
+//                index++;
+//                channel.writeAndFlush(buffer);
+            }, 0, 500, TimeUnit.MILLISECONDS);
+
+       // 等待连接关闭
             future.channel().closeFuture().sync();
-        } finally {
             group.shutdownGracefully();
-        }
-    }
+}
 
     public static void main(String[] args) throws Exception {
         String host = "127.0.0.1"; // 替换为实际的服务器主机名或IP地址
