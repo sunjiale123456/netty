@@ -5,10 +5,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.CharsetUtil;
 import pojo.inOutStation;
+import pojo.obuPosition;
 import ru.yandex.clickhouse.ClickHouseConnection;
 import ru.yandex.clickhouse.ClickHouseDataSource;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
+import server.ProtoMsg;
+
 import java.sql.PreparedStatement;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -18,11 +22,14 @@ import static java.time.LocalDateTime.now;
 
 public class ClickHouseHandler extends ChannelInboundHandlerAdapter {
 
-    private ClickHouseConnection connection;
-    private PreparedStatement statement;
-    private static int batchSize=0;
+    private static ClickHouseConnection connection;
+    private static PreparedStatement statementInOut;
+    private static PreparedStatement statementObuPos;
+    private static writeHandler writeHandler;
+    private static int batchSizeInOut=0;
+    private static int batchSizeObuPos=0;
     public final static SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-    LocalDateTime batchTime = now();  // 获取当前时间
+    public static LocalDateTime batchTime = now();  // 获取当前时间
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -31,8 +38,10 @@ public class ClickHouseHandler extends ChannelInboundHandlerAdapter {
         ClickHouseProperties properties = new ClickHouseProperties();
         properties.setUser("default");
         properties.setPassword("Gds!23d3");
-        ClickHouseDataSource dataSource = new ClickHouseDataSource("jdbc:clickhouse://10.91.125.4:8123", properties);
+        ClickHouseDataSource dataSource = new ClickHouseDataSource("jdbc:clickhouse://10.91.125.4:8123/bigdatadb_sjz", properties);
         connection = dataSource.getConnection();
+        connection.setAutoCommit(false);
+        writeHandler = new writeHandler(connection);
 
         System.out.println("连接信息：" + ctx.channel() +"   "+timeFormat.format(System.currentTimeMillis()));
 
@@ -46,10 +55,15 @@ public class ClickHouseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // 处理接收到的数据 字节流
-        ByteBuf byteBuf = (ByteBuf) msg;
-        byte[] bytes = new byte[byteBuf.readableBytes()];
-        byteBuf.readBytes(bytes);
-        String msgStr = new String(bytes);
+//        ByteBuf byteBuf = (ByteBuf) msg;
+//        byte[] bytes = new byte[byteBuf.readableBytes()];
+//        byteBuf.readBytes(bytes);
+//        String msgStr = new String(bytes);
+
+        //对象流
+        ProtoMsg protoMsg = (ProtoMsg)msg;
+        String msgStr = protoMsg.getMsg();
+        short msgType = protoMsg.getMsgType();
 
         // 向客户端发送响应数据  推送字节数据
         String response = "已收到你的消息   " +timeFormat.format(System.currentTimeMillis());
@@ -65,82 +79,74 @@ public class ClickHouseHandler extends ChannelInboundHandlerAdapter {
 //        String mess = receivedData.split("=")[3];
 //        System.out.println("--------------------");
 
-        // 准备 ClickHouse 插入语句
-        String insertQuery = "INSERT INTO bigdatadb_sjz.ods_online_bus_ad (\n" +
-                "angle ,\n" +
-                "bizType ,\n" +
-                "doorCnt ,\n" +
-                "flag ,\n" +
-                "height ,\n" +
-                "ioStation ,\n" +
-                "ioTime ,\n" +
-                "lat ,\n" +
-                "leaveTime ,\n" +
-                "license ,\n" +
-                "lineId ,\n" +
-                "lineName ,\n" +
-                "lng ,\n" +
-                "passengerCnt ,\n" +
-                "speed ,\n" +
-                "stationCode ,\n" +
-                "stationId ,\n" +
-                "stationName ,\n" +
-                "stationNo ,\n" +
-                "vehicleId \n" +
-                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+//        writeHandler writeHandler = new writeHandler(connection);
 
-        if(msgStr.contains("ProtoMsg")) {
-
-            String mess = msgStr.split("=")[3];
-            String str = mess.replace(")", "");
-            inOutStation inOutObj =null;
-
+        // 根据信息进行分数据
+        if(msgType==1) {
             try {
-                statement = connection.prepareStatement(insertQuery);
-                inOutObj = JSON.parseObject(str, inOutStation.class);
-                batchSize++;
-
-                // 将数据写入 ClickHouse
-                statement.setString(1, "" + inOutObj.getAngle());
-                statement.setString(2, "" + inOutObj.getBizType());
-                statement.setString(3, "" + inOutObj.getDoorCnt());
-                statement.setString(4, "" + inOutObj.getFlag());
-                statement.setString(5, "" + inOutObj.getHeight());
-                statement.setString(6, "" + inOutObj.getioStation());
-                statement.setString(7, "" + inOutObj.getIoTime());
-                statement.setString(8, "" + inOutObj.getLat());
-                statement.setString(9, "" + inOutObj.getLeaveTime());
-                statement.setString(10, "" + inOutObj.getLicense());
-                statement.setString(11, "" + inOutObj.getLineId());
-                statement.setString(12, "" + inOutObj.getLineName());
-                statement.setString(13, "" + inOutObj.getLng());
-                statement.setString(14, "" + inOutObj.getPassengerCnt());
-                statement.setString(15, "" + inOutObj.getSpeed());
-                statement.setString(16, "" + inOutObj.getStationCode());
-                statement.setString(17, "" + inOutObj.getStationId());
-                statement.setString(18, "" + inOutObj.getStationName());
-                statement.setString(19, "" + inOutObj.getStationNo());
-                statement.setString(20, "" + inOutObj.getVehicleId());
-                statement.addBatch();
-
-                // 判断当前时间是否比之前的时间大于5秒钟 或者 batchSize超过5000
-                if (batchSize >= 50 || Duration.between(batchTime,now()).getSeconds()>=5) {
-                    statement.executeBatch();
-                    System.out.println(batchSize+"数据已经批量写入。。" + timeFormat.format(System.currentTimeMillis()));
-                    batchTime = now();
-                    batchSize = 0;
-                }
-
+                //进出站数据
+                inOutStation inOutObj = JSON.parseObject(msgStr, inOutStation.class);
+                if(batchSizeInOut!=0)statementInOut.addBatch(writeHandler.inoutSql);
+                statementInOut = writeHandler.toInOutTable(statementInOut,inOutObj);
+                statementInOut.addBatch();
+                batchSizeInOut++;
             } catch (JSONException e) {
-                e.printStackTrace();
+                System.out.println("进出站数据异常");
+            }
+        }else if(msgType==2){
+            try {
+                //终端位置数据
+                obuPosition position = JSON.parseObject(msgStr, obuPosition.class);
+                if(batchSizeObuPos!=0)statementInOut.addBatch(writeHandler.PositionSql);
+                statementObuPos = writeHandler.toPosition(statementObuPos,position);
+                statementObuPos.addBatch();
+                batchSizeObuPos++;
+            } catch (JSONException e) {
+                System.out.println("终端位置异常");
             }
         }
+
+            //进出站
+            // 判断当前时间是否比之前的时间大于5秒钟 或者 batchSize超过5000 数据写入 ClickHouse
+//            statementInOut.addBatch();
+//            if (batchSizeInOut >= 50 || Duration.between(batchTime,now()).getSeconds()>=5) {
+//                statementInOut.executeBatch();
+//                System.out.println(batchSizeInOut + "进出站 数据已经批量写入。。" + timeFormat.format(System.currentTimeMillis()));
+//                batchTime = now();
+//                batchSizeInOut = 0;
+//            }
+//            //终端位置
+//            // 判断当前时间是否比之前的时间大于5秒钟 或者 batchSize超过5000 数据写入 ClickHouse
+//            statementObuPos.addBatch();
+//            if (batchSizeObuPos >= 50 || Duration.between(batchTime,now()).getSeconds()>=5) {
+//                statementObuPos.executeBatch();
+//                System.out.println(batchSizeObuPos + "终端位置 数据已经批量写入。。" + timeFormat.format(System.currentTimeMillis()));
+//                batchTime = now();
+//                batchSizeObuPos = 0;
+//            }
+//            // 提交事务
+//            connection.commit();
+
+            LocalDateTime now = now();
+            if (batchSizeObuPos >= 100 || batchSizeInOut >=100) {
+                statementInOut.executeBatch();
+                statementObuPos.executeBatch();
+                batchTime = now;
+                System.out.println("提交之前"+timeFormat.format(System.currentTimeMillis()));
+                connection.commit();
+                System.out.println("提交之后"+timeFormat.format(System.currentTimeMillis()));
+                System.out.println(batchSizeInOut + "进出站 数据已经批量写入。。" + timeFormat.format(System.currentTimeMillis()));
+                System.out.println(batchSizeObuPos + "终端位置 数据已经批量写入。。" + timeFormat.format(System.currentTimeMillis()));
+                batchSizeInOut = 0;
+                batchSizeObuPos = 0;
+            }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 执行关闭连接
-        statement.close();
+        statementInOut.close();
+        statementObuPos.close();
         connection.close();
     }
 

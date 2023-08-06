@@ -7,6 +7,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.CharsetUtil;
+import server.Message;
+import server.ProtoMsg;
 
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +87,11 @@ public class NettyClientTest {
                         "\t\"stationNo\": 4,\n" +
                         "\t\"vehicleId\": 1204428111396928\n" +
                         "})";
+                //创建协议包对象
+
+                ProtoMsg protoMsg = new ProtoMsg();
+
+
                 // 准备要推送的字节数据
                 byte[] data = message.getBytes();
 

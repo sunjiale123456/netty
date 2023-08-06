@@ -1,6 +1,7 @@
 
 package server;
 
+import guigu.MyMessageEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelInitializer;
@@ -11,7 +12,10 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
+import write.ClickHouseBatchWriter;
 import write.ClickHouseHandler;
+import write.MyServerHandler;
+import write.ProtoMsgDecoder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +36,8 @@ public class nettyServer{
         try {
             bootStrap.group(bossGroup, wordGroup);
             bootStrap.channel(NioServerSocketChannel.class);// 设置nio类型的channel
+
+
             bootStrap.childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
@@ -42,7 +48,12 @@ public class nettyServer{
                         // 将数据转为字符
 //                        ch.pipeline().addLast(new StringDecoder());
 //                        ch.pipeline().addLast(new ServerHandler());
-                        ch.pipeline().addLast(new ClickHouseHandler());
+//                        ch.pipeline().addLast(new ClickHouseHandler());
+                        // 推送 编码器
+                        ch.pipeline().addLast( new MyMessageEncoder());
+                        // 解码器
+                        ch.pipeline().addLast(new ProtoMsgDecoder());
+                        ch.pipeline().addLast(new ClickHouseBatchWriter());
                     }
             });
 

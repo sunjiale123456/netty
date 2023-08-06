@@ -2,23 +2,23 @@ package pojo;
 
 // 终端位置信息
 public class obuPosition {
-    private int alarm ;
-    private int angle ;
-    private int bizType ;
-    private int gpsTime ;
-    private int height ;
-    private int lat ;
+    private Double alarm ;
+    private Double angle ;
+    private Double bizType ;
+    private String gpsTime ;
+    private Double height ;
+    private Double lat ;
     private String license ;
-    private int lineCode ;
-    private int lineId ;
-    private int lng ;
-    private int mile ;
-    private int speed ;
-    private int status ;
-    private long vehicleId ;
-    private int crowding ;
+    private Double lineCode ;
+    private Double lineId ;
+    private Double lng ;
+    private Double mile ;
+    private Double speed ;
+    private Double status ;
+    private Long vehicleId ;
+    private Double crowding ;
 
-    public obuPosition(int alarm, int angle, int bizType, int gpsTime, int height, int lat, String license, int lineCode, int lineId, int lng, int mile, int speed, int status, long vehicleId, int crowding) {
+    public obuPosition(Double alarm, Double angle, Double bizType, String gpsTime, Double height, Double lat, String license, Double lineCode, Double lineId, Double lng, Double mile, Double speed, Double status, Long vehicleId, Double crowding) {
         this.alarm = alarm;
         this.angle = angle;
         this.bizType = bizType;
@@ -36,51 +36,51 @@ public class obuPosition {
         this.crowding = crowding;
     }
 
-    public int getAlarm() {
+    public Double getAlarm() {
         return alarm;
     }
 
-    public void setAlarm(int alarm) {
+    public void setAlarm(Double alarm) {
         this.alarm = alarm;
     }
 
-    public int getAngle() {
+    public Double getAngle() {
         return angle;
     }
 
-    public void setAngle(int angle) {
+    public void setAngle(Double angle) {
         this.angle = angle;
     }
 
-    public int getBizType() {
+    public Double getBizType() {
         return bizType;
     }
 
-    public void setBizType(int bizType) {
+    public void setBizType(Double bizType) {
         this.bizType = bizType;
     }
 
-    public int getGpsTime() {
+    public String getGpsTime() {
         return gpsTime;
     }
 
-    public void setGpsTime(int gpsTime) {
+    public void setGpsTime(String gpsTime) {
         this.gpsTime = gpsTime;
     }
 
-    public int getHeight() {
+    public Double getHeight() {
         return height;
     }
 
-    public void setHeight(int height) {
+    public void setHeight(Double height) {
         this.height = height;
     }
 
-    public int getLat() {
+    public Double getLat() {
         return lat;
     }
 
-    public void setLat(int lat) {
+    public void setLat(Double lat) {
         this.lat = lat;
     }
 
@@ -92,67 +92,67 @@ public class obuPosition {
         this.license = license;
     }
 
-    public int getLineCode() {
+    public Double getLineCode() {
         return lineCode;
     }
 
-    public void setLineCode(int lineCode) {
+    public void setLineCode(Double lineCode) {
         this.lineCode = lineCode;
     }
 
-    public int getLineId() {
+    public Double getLineId() {
         return lineId;
     }
 
-    public void setLineId(int lineId) {
+    public void setLineId(Double lineId) {
         this.lineId = lineId;
     }
 
-    public int getLng() {
+    public Double getLng() {
         return lng;
     }
 
-    public void setLng(int lng) {
+    public void setLng(Double lng) {
         this.lng = lng;
     }
 
-    public int getMile() {
+    public Double getMile() {
         return mile;
     }
 
-    public void setMile(int mile) {
+    public void setMile(Double mile) {
         this.mile = mile;
     }
 
-    public int getSpeed() {
+    public Double getSpeed() {
         return speed;
     }
 
-    public void setSpeed(int speed) {
+    public void setSpeed(Double speed) {
         this.speed = speed;
     }
 
-    public int getStatus() {
+    public Double getStatus() {
         return status;
     }
 
-    public void setStatus(int status) {
+    public void setStatus(Double status) {
         this.status = status;
     }
 
-    public long getVehicleId() {
+    public Long getVehicleId() {
         return vehicleId;
     }
 
-    public void setVehicleId(long vehicleId) {
+    public void setVehicleId(Long vehicleId) {
         this.vehicleId = vehicleId;
     }
 
-    public int getCrowding() {
+    public Double getCrowding() {
         return crowding;
     }
 
-    public void setCrowding(int crowding) {
+    public void setCrowding(Double crowding) {
         this.crowding = crowding;
     }
 }
